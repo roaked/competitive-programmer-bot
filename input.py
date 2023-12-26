@@ -1,40 +1,41 @@
 import requests
-from bs4 import BeautifulSoup
 
-# Function to retrieve and parse a problem statement from a hypothetical online source
-def retrieve_problem(problem_id):
-    # Assuming a hypothetical URL structure where problems are available
-    url = f"https://example.com/problems/{problem_id}"
-    
-    # Send a GET request to fetch the problem page
-    response = requests.get(url)
-    
+api_token = 'YOUR_API_TOKEN'
+
+headers = {
+    'Authorization': f'Bearer {api_token}'
+}
+
+def fetch_problems_with_details():
+    url = 'https://leetcode.com/api/problems/all/'
+    response = requests.get(url, headers=headers)
+
     if response.status_code == 200:
-        # Parse HTML content using BeautifulSoup
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Find and extract the elements containing problem information
-        problem_statement = soup.find('div', class_='problem-statement').get_text()
-        input_format = soup.find('div', class_='input-format').get_text()
-        output_format = soup.find('div', class_='output-format').get_text()
-        
-        # Return the parsed problem information
-        return {
-            "Problem Statement": problem_statement.strip(),
-            "Input Format": input_format.strip(),
-            "Output Format": output_format.strip()
-        }
+        problems = response.json()['stat_status_pairs']
+
+        for problem in problems:
+            title = problem['stat']['question__title']
+            category = problem['difficulty']['level'] 
+            problem_id = problem['stat']['question_id']
+
+            problem_details_url = f'https://leetcode.com/problemset/{title}/'
+            problem_response = requests.get(problem_details_url, headers=headers)
+            if problem_response.status_code == 200:
+                problem_html = problem_response.text
+
+                print(f"Title: {title}")
+                print(f"Category: {category}")
+                print(f"Problem ID: {problem_id}")
+
+                print("Parsed Problem Statement: ")
+                print("Parsed Input Format: ")
+                print("Parsed Output Format: ")
+                print("\n")
+
+            else:
+                print(f"Failed to fetch details for problem ID: {problem_id}")
+
     else:
-        print("Failed to retrieve the problem.")
-        return None
+        print("Failed to fetch problems.")
 
-# Example: Retrieving and displaying a problem statement for problem ID '123'
-problem_info = retrieve_problem('123')
-
-if problem_info:
-    print("Problem Statement:")
-    print(problem_info["Problem Statement"])
-    print("\nInput Format:")
-    print(problem_info["Input Format"])
-    print("\nOutput Format:")
-    print(problem_info["Output Format"])
+fetch_problems_with_details()
